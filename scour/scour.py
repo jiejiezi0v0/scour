@@ -4093,42 +4093,29 @@ def maybe_gziped_file(filename, mode="r"):
 
 
 def getInOut(options):
-    """
-    Handle text input and output while maintaining file-like object interface.
-    
-    Args:
-        options: Command line options
-    
-    Returns:
-        list: [input_file_like_object, output_file_like_object]
-    """
-    # Handle input
     if options.infilename:
-        infile = StringIO(open(options.infilename, "r").read())
+        infile = maybe_gziped_file(options.infilename, "rb")
+        # GZ: could catch a raised IOError here and report
     else:
+        # GZ: could sniff for gzip compression here
+        #
+        # open the binary buffer of stdin and let XML parser handle decoding
+        try:
+            infile = sys.stdin.buffer
+        except AttributeError:
+            infile = sys.stdin
+        # the user probably does not want to manually enter SVG code into the terminal...
         if sys.stdin.isatty():
             _options_parser.error("No input file specified, see --help for detailed usage information")
-        infile = StringIO(sys.stdin.read())
 
-    # Handle output
     if options.outfilename:
-        # Create a custom file-like object that writes to the file when closed
-        outfile = StringIO()
-        outfile.real_path = options.outfilename
-        old_close = outfile.close
-        def new_close():
-            with open(outfile.real_path, "w") as f:
-                f.write(outfile.getvalue())
-            old_close()
-        outfile.close = new_close
+        outfile = maybe_gziped_file(options.outfilename, "wb")
     else:
-        # Create a custom StringIO that writes to stdout
-        outfile = StringIO()
-        old_close = outfile.close
-        def new_close():
-            sys.stdout.write(outfile.getvalue())
-            old_close()
-        outfile.close = new_close
+        # open the binary buffer of stdout as the output is already encoded
+        try:
+            outfile = sys.stdout.buffer
+        except AttributeError:
+            outfile = sys.stdout
         # redirect informational output to stderr when SVG is output to stdout
         options.stdout = sys.stderr
 
