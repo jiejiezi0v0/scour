@@ -59,6 +59,7 @@ import xml.dom.minidom
 from xml.dom import Node, NotFoundErr
 from collections import namedtuple, defaultdict
 from decimal import Context, Decimal, InvalidOperation, getcontext
+from io import StringIO
 
 import six
 from six.moves import range, urllib
@@ -3936,20 +3937,20 @@ _options_parser.add_option("-o",
 
 _option_group_optimization = optparse.OptionGroup(_options_parser, "Optimization")
 _option_group_optimization.add_option("--set-precision",
-                                      action="store", type=int, dest="digits", default=5, metavar="NUM",
+                                      action="store", type=int, dest="digits", default=3, metavar="NUM",
                                       help="set number of significant digits (default: %default)")
 _option_group_optimization.add_option("--set-c-precision",
                                       action="store", type=int, dest="cdigits", default=-1, metavar="NUM",
                                       help="set number of significant digits for control points "
                                            "(default: same as '--set-precision')")
 _option_group_optimization.add_option("--disable-simplify-colors",
-                                      action="store_false", dest="simple_colors", default=True,
+                                      action="store_false", dest="simple_colors", default=False,
                                       help="won't convert colors to #RRGGBB format")
 _option_group_optimization.add_option("--disable-style-to-xml",
-                                      action="store_false", dest="style_to_xml", default=True,
+                                      action="store_false", dest="style_to_xml", default=False,
                                       help="won't convert styles into XML attributes")
 _option_group_optimization.add_option("--disable-group-collapsing",
-                                      action="store_false", dest="group_collapse", default=True,
+                                      action="store_false", dest="group_collapse", default=False,
                                       help="won't collapse <g> elements")
 _option_group_optimization.add_option("--create-groups",
                                       action="store_true", dest="group_create", default=False,
@@ -3971,23 +3972,23 @@ _options_parser.add_option_group(_option_group_optimization)
 
 _option_group_document = optparse.OptionGroup(_options_parser, "SVG document")
 _option_group_document.add_option("--strip-xml-prolog",
-                                  action="store_true", dest="strip_xml_prolog", default=False,
+                                  action="store_true", dest="strip_xml_prolog", default=True,
                                   help="won't output the XML prolog (<?xml ?>)")
 _option_group_document.add_option("--remove-titles",
-                                  action="store_true", dest="remove_titles", default=False,
+                                  action="store_true", dest="remove_titles", default=True,
                                   help="remove <title> elements")
 _option_group_document.add_option("--remove-descriptions",
-                                  action="store_true", dest="remove_descriptions", default=False,
+                                  action="store_true", dest="remove_descriptions", default=True,
                                   help="remove <desc> elements")
 _option_group_document.add_option("--remove-metadata",
-                                  action="store_true", dest="remove_metadata", default=False,
+                                  action="store_true", dest="remove_metadata", default=True,
                                   help="remove <metadata> elements "
                                        "(which may contain license/author information etc.)")
 _option_group_document.add_option("--remove-descriptive-elements",
-                                  action="store_true", dest="remove_descriptive_elements", default=False,
+                                  action="store_true", dest="remove_descriptive_elements", default=True,
                                   help="remove <title>, <desc> and <metadata> elements")
 _option_group_document.add_option("--enable-comment-stripping",
-                                  action="store_true", dest="strip_comments", default=False,
+                                  action="store_true", dest="strip_comments", default=True,
                                   help="remove all comments (<!-- -->)")
 _option_group_document.add_option("--disable-embed-rasters",
                                   action="store_false", dest="embed_rasters", default=True,
@@ -3999,7 +4000,7 @@ _options_parser.add_option_group(_option_group_document)
 
 _option_group_formatting = optparse.OptionGroup(_options_parser, "Output formatting")
 _option_group_formatting.add_option("--indent",
-                                    action="store", type="string", dest="indent_type", default="space", metavar="TYPE",
+                                    action="store", type="string", dest="indent_type", default="none", metavar="TYPE",
                                     help="indentation of the output: none, space, tab (default: %default)")
 _option_group_formatting.add_option("--nindent",
                                     action="store", type=int, dest="indent_depth", default=1, metavar="NUM",
@@ -4009,13 +4010,13 @@ _option_group_formatting.add_option("--no-line-breaks",
                                     help="do not create line breaks in output"
                                     "(also disables indentation; might be overridden by xml:space=\"preserve\")")
 _option_group_formatting.add_option("--strip-xml-space",
-                                    action="store_true", dest="strip_xml_space_attribute", default=False,
+                                    action="store_true", dest="strip_xml_space_attribute", default=True,
                                     help="strip the xml:space=\"preserve\" attribute from the root SVG element")
 _options_parser.add_option_group(_option_group_formatting)
 
 _option_group_ids = optparse.OptionGroup(_options_parser, "ID attributes")
 _option_group_ids.add_option("--enable-id-stripping",
-                             action="store_true", dest="strip_ids", default=False,
+                             action="store_true", dest="strip_ids", default=True,
                              help="remove all unreferenced IDs")
 _option_group_ids.add_option("--shorten-ids",
                              action="store_true", dest="shorten_ids", default=False,
@@ -4092,29 +4093,42 @@ def maybe_gziped_file(filename, mode="r"):
 
 
 def getInOut(options):
+    """
+    Handle text input and output while maintaining file-like object interface.
+    
+    Args:
+        options: Command line options
+    
+    Returns:
+        list: [input_file_like_object, output_file_like_object]
+    """
+    # Handle input
     if options.infilename:
-        infile = maybe_gziped_file(options.infilename, "rb")
-        # GZ: could catch a raised IOError here and report
+        infile = StringIO(open(options.infilename, "r").read())
     else:
-        # GZ: could sniff for gzip compression here
-        #
-        # open the binary buffer of stdin and let XML parser handle decoding
-        try:
-            infile = sys.stdin.buffer
-        except AttributeError:
-            infile = sys.stdin
-        # the user probably does not want to manually enter SVG code into the terminal...
         if sys.stdin.isatty():
             _options_parser.error("No input file specified, see --help for detailed usage information")
+        infile = StringIO(sys.stdin.read())
 
+    # Handle output
     if options.outfilename:
-        outfile = maybe_gziped_file(options.outfilename, "wb")
+        # Create a custom file-like object that writes to the file when closed
+        outfile = StringIO()
+        outfile.real_path = options.outfilename
+        old_close = outfile.close
+        def new_close():
+            with open(outfile.real_path, "w") as f:
+                f.write(outfile.getvalue())
+            old_close()
+        outfile.close = new_close
     else:
-        # open the binary buffer of stdout as the output is already encoded
-        try:
-            outfile = sys.stdout.buffer
-        except AttributeError:
-            outfile = sys.stdout
+        # Create a custom StringIO that writes to stdout
+        outfile = StringIO()
+        old_close = outfile.close
+        def new_close():
+            sys.stdout.write(outfile.getvalue())
+            old_close()
+        outfile.close = new_close
         # redirect informational output to stderr when SVG is output to stdout
         options.stdout = sys.stderr
 
