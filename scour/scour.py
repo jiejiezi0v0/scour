@@ -3950,7 +3950,7 @@ _option_group_optimization.add_option("--disable-style-to-xml",
                                       action="store_false", dest="style_to_xml", default=False,
                                       help="won't convert styles into XML attributes")
 _option_group_optimization.add_option("--disable-group-collapsing",
-                                      action="store_false", dest="group_collapse", default=False,
+                                      action="store_false", dest="group_collapse", default=True,
                                       help="won't collapse <g> elements")
 _option_group_optimization.add_option("--create-groups",
                                       action="store_true", dest="group_create", default=False,
@@ -3994,7 +3994,7 @@ _option_group_document.add_option("--disable-embed-rasters",
                                   action="store_false", dest="embed_rasters", default=True,
                                   help="won't embed rasters as base64-encoded data")
 _option_group_document.add_option("--enable-viewboxing",
-                                  action="store_true", dest="enable_viewboxing", default=False,
+                                  action="store_true", dest="enable_viewboxing", default=True,
                                   help="changes document width/height to 100%/100% and creates viewbox coordinates")
 _options_parser.add_option_group(_option_group_document)
 
