@@ -3944,13 +3944,13 @@ _option_group_optimization.add_option("--set-c-precision",
                                       help="set number of significant digits for control points "
                                            "(default: same as '--set-precision')")
 _option_group_optimization.add_option("--disable-simplify-colors",
-                                      action="store_false", dest="simple_colors", default=True,
+                                      action="store_false", dest="simple_colors", default=False,
                                       help="won't convert colors to #RRGGBB format")
 _option_group_optimization.add_option("--disable-style-to-xml",
                                       action="store_false", dest="style_to_xml", default=False,
                                       help="won't convert styles into XML attributes")
 _option_group_optimization.add_option("--disable-group-collapsing",
-                                      action="store_false", dest="group_collapse", default=True,
+                                      action="store_false", dest="group_collapse", default=False,
                                       help="won't collapse <g> elements")
 _option_group_optimization.add_option("--create-groups",
                                       action="store_true", dest="group_create", default=False,
@@ -3966,7 +3966,7 @@ _option_group_optimization.add_option("--renderer-workaround",
                                       action="store_true", dest="renderer_workaround", default=True,
                                       help="work around various renderer bugs (currently only librsvg) (default)")
 _option_group_optimization.add_option("--no-renderer-workaround",
-                                      action="store_false", dest="renderer_workaround", default=False,
+                                      action="store_false", dest="renderer_workaround", default=True,
                                       help="do not work around various renderer bugs (currently only librsvg)")
 _options_parser.add_option_group(_option_group_optimization)
 
@@ -3994,7 +3994,7 @@ _option_group_document.add_option("--disable-embed-rasters",
                                   action="store_false", dest="embed_rasters", default=True,
                                   help="won't embed rasters as base64-encoded data")
 _option_group_document.add_option("--enable-viewboxing",
-                                  action="store_true", dest="enable_viewboxing", default=True,
+                                  action="store_true", dest="enable_viewboxing", default=False,
                                   help="changes document width/height to 100%/100% and creates viewbox coordinates")
 _options_parser.add_option_group(_option_group_document)
 
