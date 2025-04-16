@@ -3944,7 +3944,7 @@ _option_group_optimization.add_option("--set-c-precision",
                                       help="set number of significant digits for control points "
                                            "(default: same as '--set-precision')")
 _option_group_optimization.add_option("--disable-simplify-colors",
-                                      action="store_false", dest="simple_colors", default=False,
+                                      action="store_false", dest="simple_colors", default=True,
                                       help="won't convert colors to #RRGGBB format")
 _option_group_optimization.add_option("--disable-style-to-xml",
                                       action="store_false", dest="style_to_xml", default=False,
