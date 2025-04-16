@@ -3966,7 +3966,7 @@ _option_group_optimization.add_option("--renderer-workaround",
                                       action="store_true", dest="renderer_workaround", default=True,
                                       help="work around various renderer bugs (currently only librsvg) (default)")
 _option_group_optimization.add_option("--no-renderer-workaround",
-                                      action="store_false", dest="renderer_workaround", default=True,
+                                      action="store_false", dest="renderer_workaround", default=False,
                                       help="do not work around various renderer bugs (currently only librsvg)")
 _options_parser.add_option_group(_option_group_optimization)
 
